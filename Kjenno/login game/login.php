@@ -1,40 +1,31 @@
 <?php
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "";
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    if($conn->connect_error){
-        die("connection failed".$conn->connect_error);
+    include('DB_connect.php');
+
+    function checkPost() {
+        foreach($_GET as $key => $value) {
+            $_GET[$key] = htmlentities(strip_tags($value));
+        }
     }
 
+   
+            checkPost();
+            $username = $_GET['username'];
+            $password= $_GET['password'];
 
-    function guidv4($data = null) {
-        // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
-        $data = $data ?? random_bytes(16);
-        assert(strlen($data) == 16);
-    
-        // Set version to 0100
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        // Set bits 6-7 to 10
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-    
-        // Output the 36 character UUID.
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }
-    
+            $sql = "select * from users where username = '$username'";
+            $result = mysqli_query($conn, $sql);
+            $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
+            $count = mysqli_num_rows($result);
 
+            $stored_password = $row['Password'];
+            if (password_verify($password, $stored_password)) {
+                // you are logged in
+            } 
 
-            $uuid = guidv4();
-            $Username = $_GET['Username'] ; 
-            $BirthDate= $_GET['BirthDate'] ; 
-            $Gender = $_GET['Gender'] ; 
-            $Email = $_GET['Email'] ; 
-            $Password=password_hash($_GET['Password'], PASSWORD_DEFAULT);
+            else {
+                echo '<script  
+                type="text/javascript">window.onload = function () { alert("Password or Username invalid"); } 
+                    </script>'; 
+            }
 
-            $query = "INSERT INTO users(uuid, Username, Password, Email, BirthDate, Gender) VALUES (?,?, ?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $query);
-            mysqli_stmt_bind_param($stmt, 'ssssss', $uuid, $Username, $Password, $Email, $BirthDate, $Gender);
-            $run = mysqli_stmt_execute($stmt);
-        
-        ?>
+?>
